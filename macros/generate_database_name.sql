@@ -79,6 +79,7 @@
         {%- endif -%}
 
       {%- else -%}
+        {{ log(target.name) }}
         {{ exceptions.raise_compiler_error(error_unresolve_message) }}
       {%- endif -%}
     {%- endif -%}
