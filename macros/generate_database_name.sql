@@ -31,6 +31,7 @@
 
       {%- set error_unresolve_message -%}
           {{ node.resource_type | capitalize }} '{{ node.unique_id }}' unable to resolve database name.
+          {{ node }}
       {%- endset -%}
 
       {%- if is_on_end_hook -%}
@@ -79,7 +80,6 @@
         {%- endif -%}
 
       {%- else -%}
-        {{ log(target.name) }}
         {{ exceptions.raise_compiler_error(error_unresolve_message) }}
       {%- endif -%}
     {%- endif -%}
