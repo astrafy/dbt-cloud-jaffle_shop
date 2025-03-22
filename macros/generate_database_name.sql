@@ -5,6 +5,7 @@
     {% set is_uat =         ('uat' in target.name ) %}
     {% set is_prd =         ('prd' in target.name ) %}
 
+    {% set is_saved_query =     (node.resource_type == 'saved_query')  %}
     {% set is_export =     (node.config.export_as is not none)  %}
     {% if is_export and is_dev %}
       {{- 'internal-data-dm-dev-51ce' -}}
@@ -12,6 +13,13 @@
       {{- 'internal-data-dm-uat-de8a' -}}
     {% elif is_export and is_prd %}
       {{- 'internal-data-dm-prd-a412' -}}
+    {% elif is_saved_query and is_dev %}
+      {{- 'internal-data-dm-dev-51ce' -}}
+    {% elif is_saved_query and is_uat %}
+      {{- 'internal-data-dm-uat-de8a' -}}
+    {% elif is_saved_query and is_prd %}
+      {{- 'internal-data-dm-prd-a412' -}}
+
     {%- else -%}
       {# Packages helpers variables #}
       {% set is_elementary =     ('elementary' in node.fqn[0])  %}
