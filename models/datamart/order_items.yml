@@ -194,6 +194,8 @@ saved_queries:
           schema: bqdts_dbt_cloud_demo
           database: internal-data-dm-prd-a412
     config:
+      database: internal-data-dm-prd-a412
+      schema: bqdts_dbt_cloud_demo
       cache:
         enabled: true
   - name: weekly_revenue
@@ -204,10 +206,14 @@ saved_queries:
         - revenue
       group_by:
         - TimeDimension('metric_time', 'week')
+    config:
+      database: internal-data-dm-prd-a412
+      schema: bqdts_dbt_cloud_demo
     exports:
       - name: weekly_revenue
         config:
           export_as: table
           schema: bqdts_dbt_cloud_demo
           database: internal-data-dm-prd-a412
+
 

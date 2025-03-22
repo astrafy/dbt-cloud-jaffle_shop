@@ -89,6 +89,9 @@ saved_queries:
         - TimeDimension('metric_time', 'day')
       where:
         - "{{ Dimension('customer__customer_type') }}  = 'new'"
+    config:
+      database: internal-data-dm-prd-a412
+      schema: bqdts_dbt_cloud_demo
     exports:
       - name: new_customer_orders
         config:
