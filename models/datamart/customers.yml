@@ -94,8 +94,10 @@ saved_queries:
         config:
           export_as: table
           schema: bqdts_dbt_cloud_demo
+          database: internal-data-dm-prd-a412
       - name: new_customer_orders_view
         config:
           export_as: view
           alias: new_customer_orders_export_alias
           schema: bqdts_dbt_cloud_demo
+          database: internal-data-dm-prd-a412

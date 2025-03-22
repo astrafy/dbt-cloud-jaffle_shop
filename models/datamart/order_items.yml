@@ -192,6 +192,7 @@ saved_queries:
         config:
           export_as: table
           schema: bqdts_dbt_cloud_demo
+          database: internal-data-dm-prd-a412
     config:
       cache:
         enabled: true
@@ -208,4 +209,5 @@ saved_queries:
         config:
           export_as: table
           schema: bqdts_dbt_cloud_demo
+          database: internal-data-dm-prd-a412
 
