@@ -93,7 +93,9 @@ saved_queries:
       - name: new_customer_orders
         config:
           export_as: table
+          schema: bqdts_dbt_cloud_demo
       - name: new_customer_orders_view
         config:
           export_as: view
           alias: new_customer_orders_export_alias
+          schema: bqdts_dbt_cloud_demo
