@@ -1,13 +1,10 @@
 models:
   - name: customers
     description: Customer overview data mart, offering key details for each unique customer. One row per customer.
-    data_tests:
-      - dbt_utils.expression_is_true:
-          expression: "lifetime_spend_pretax + lifetime_tax_paid = lifetime_spend"
     columns:
       - name: customer_id
         description: The unique key of the orders mart.
-        data_tests:
+        tests:
           - not_null
           - unique
       - name: customer_name
@@ -20,13 +17,11 @@ models:
         description: The timestamp of a customer's most recent order.
       - name: lifetime_spend_pretax
         description: The sum of all the pre-tax subtotals of every order a customer has placed.
-      - name: lifetime_tax_paid
-        description: The sum of all the tax portion of every order a customer has placed.
       - name: lifetime_spend
         description: The sum of all the order totals (including tax) that a customer has ever placed.
       - name: customer_type
         description: Options are 'new' or 'returning', indicating if a customer has ordered more than once or has only placed their first order to date.
-        data_tests:
+        tests:
           - accepted_values:
               values: ["new", "returning"]
 
@@ -48,6 +43,7 @@ semantic_models:
         type: categorical
       - name: first_ordered_at
         type: time
+        expr: cast(first_ordered_at as DATE)
         type_params:
           time_granularity: day
       - name: last_ordered_at
@@ -55,9 +51,6 @@ semantic_models:
         type_params:
           time_granularity: day
     measures:
-      - name: customers
-        description: Count of unique customers
-        agg: count_distinct
       - name: count_lifetime_orders
         description: Total count of orders per customer.
         agg: sum
@@ -69,38 +62,38 @@ semantic_models:
         description: Gross customer lifetime spend inclusive of taxes.
 
 metrics:
-  - name: lifetime_spend_pretax
-    description: Customer's lifetime spend before tax
-    label: LTV Pre-tax
+  # Simple metrics
+  - name: customers_with_orders
+    description: "Distict count of customers placing orders"
+    type: simple
+    label: Customers w/ Orders
+    type_params:
+      measure: customers_with_orders
+  - name: new_customer
+    description: Unique count of new customers.
+    label: New Customers
     type: simple
     type_params:
-      measure: lifetime_spend_pretax
-  - name: count_lifetime_orders
-    description: Count of lifetime orders
-    label: Count Lifetime Orders
-    type: simple
-    type_params:
-      measure: count_lifetime_orders
-  - name: average_order_value
-    description: LTV pre-tax / number of orders
-    label: Average Order Value
-    type: derived
-    type_params:
-      metrics:
-        - count_lifetime_orders
-        - lifetime_spend_pretax
-      expr: lifetime_spend_pretax / count_lifetime_orders
+      measure: customers_with_orders
+    filter: |
+      {{ Dimension('customer__customer_type') }}  = 'new'
 
 saved_queries:
-  - name: customer_order_metrics
+  - name: new_customer_orders
+    description: New customer orders by name and time
     query_params:
       metrics:
-        - count_lifetime_orders
-        - lifetime_spend_pretax
-        - average_order_value
+        - orders
       group_by:
-        - Entity('customer')
+        - Dimension('customer__customer_name')
+        - TimeDimension('metric_time', 'day')
+      where:
+        - "{{ Dimension('customer__customer_type') }}  = 'new'"
     exports:
-      - name: customer_order_metrics
+      - name: new_customer_orders
         config:
           export_as: table
+      - name: new_customer_orders_view
+        config:
+          export_as: view
+          alias: new_customer_orders_export_alias

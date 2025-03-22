@@ -59,7 +59,7 @@ semantic_models:
         expr: product_id
     dimensions:
       - name: ordered_at
-        expr: ordered_at
+        expr: cast(ordered_at as DATE)
         type: time
         type_params:
           time_granularity: day
@@ -67,23 +67,40 @@ semantic_models:
         type: categorical
       - name: is_drink_item
         type: categorical
+        description: Denoting whether it's a drink item
     measures:
       - name: revenue
         description: The revenue generated for each order item. Revenue is calculated as a sum of revenue associated with each product in an order.
         agg: sum
         expr: product_price
+      - name: average_revenue
+        description: The revenue generated for each order item. Revenue is calculated as a sum of revenue associated with each product in an order.
+        agg: average
+        expr: product_price
+        create_metric: true
       - name: food_revenue
         description: The revenue generated for each order item. Revenue is calculated as a sum of revenue associated with each product in an order.
         agg: sum
-        expr: case when is_food_item is true then product_price else 0 end
+        expr: case when is_food_item = 1 then product_price else 0 end
       - name: drink_revenue
         description: The revenue generated for each order item. Revenue is calculated as a sum of revenue associated with each product in an order.
         agg: sum
-        expr: case when is_drink_item is true then product_price else 0 end
+        expr: case when is_drink_item = 1 then product_price else 0 end
       - name: median_revenue
         description: The median revenue generated for each order item.
-        agg: median
+        agg: percentile
+        agg_params:
+          percentile: .5
+          use_approximate_percentile: True
         expr: product_price
+
+groups:
+  - name: finance
+    owner:
+      # 'name' or 'email' is required; additional properties allowed
+      email: finance@jaffleshop.com
+      slack: finance-data
+      github: finance-data-team
 
 metrics:
   # Simple metrics
@@ -92,7 +109,9 @@ metrics:
     type: simple
     label: Revenue
     type_params:
-      measure: revenue
+      measure:
+        name: revenue
+        fill_nulls_with: 0
   - name: order_cost
     description: Sum of cost for each order item.
     label: Order Cost
@@ -111,14 +130,8 @@ metrics:
     type: simple
     type_params:
       measure: food_revenue
-  - name: drink_revenue
-    description: The revenue from drinks in each order
-    label: Drink Revenue
-    type: simple
-    type_params:
-      measure: drink_revenue
 
-  # Ratio Metrics
+  #Ratio Metrics
   - name: food_revenue_pct
     description: The % of order revenue from food.
     label: Food Revenue %
@@ -126,15 +139,9 @@ metrics:
     type_params:
       numerator: food_revenue
       denominator: revenue
-  - name: drink_revenue_pct
-    description: The % of order revenue from drinks.
-    label: Drink Revenue %
-    type: ratio
-    type_params:
-      numerator: drink_revenue
-      denominator: revenue
 
-  # Derived Metrics
+
+  #Derived Metrics
   - name: revenue_growth_mom
     description: "Percentage growth of revenue compared to 1 month ago. Excluded tax"
     type: derived
@@ -165,17 +172,41 @@ metrics:
     type: cumulative
     type_params:
       measure: revenue
+      # cumulative_type_params:
+      #   period_agg: last
 
 saved_queries:
-  - name: revenue_metrics
+  - name: order_metrics
+    label: order metrics
+    description: Relevant order metrics
+    query_params:
+      metrics:
+        - orders
+        - large_order
+        - food_orders
+        - order_total
+      group_by:
+        - Entity('order_id')
+        - TimeDimension('metric_time', 'day')
+        - Dimension('customer__customer_name')
+        - Dimension('customer__customer_type')
+        - TimeDimension('customer__first_ordered_at', 'day')
+    exports:
+      - name: order_data_key_metrics
+        config:
+          export_as: table
+    config:
+      cache:
+        enabled: true
+  - name: weekly_revenue
+    label: weekly revenue
+    description: Weekly revenue
     query_params:
       metrics:
         - revenue
-        - food_revenue
-        - drink_revenue
       group_by:
-        - TimeDimension('metric_time', 'day')
+        - TimeDimension('metric_time', 'week')
     exports:
-      - name: revenue_metrics
+      - name: weekly_revenue
         config:
           export_as: table
